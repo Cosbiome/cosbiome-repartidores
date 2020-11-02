@@ -1,21 +1,17 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React from "react";
+import { NativeRouter, Switch, Route } from "react-router-native";
+import Home from "./pages/Home.js";
+import ListRepartidor from "./pages/ListRepartidor.js";
 
-export default function App() {
+const App = () => {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NativeRouter>
+      <Switch>
+        <Route exact path="/" component={Home} />
+        <Route path="/listRepartidor" component={ListRepartidor} />
+      </Switch>
+    </NativeRouter>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default App;
