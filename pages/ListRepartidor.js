@@ -17,6 +17,7 @@ import AsyncStorage from "@react-native-community/async-storage";
 import { ScrollView, Alert } from "react-native";
 import { http } from "../libs/http";
 import { parseFirebaseNorm } from "../utils/asignarForFirebase";
+import { socketIo } from "../utils/socketIo";
 
 const ListRepartidor = (props) => {
   const [prueba, setPrueba] = useState({ data: { repartidores: [] } });
@@ -25,6 +26,7 @@ const ListRepartidor = (props) => {
   const [indexRep, setIndexRep] = useState(0);
   const [firmaCliente, setFirmaCliente] = useState("");
   const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [telefonovue, setTelefonoVue] = useState('false');
 
   useEffect(() => {
     handleFetchGet();
@@ -55,7 +57,14 @@ const ListRepartidor = (props) => {
 
     let nombre = await AsyncStorage.getItem("nombre");
     let index = rutaB[0].repartidores.findIndex((rep) => rep.nombreRepartidor === nombre);
+    let telvue = await AsyncStorage.getItem('telefono');
     setIndexRep(index);
+
+    setTelefonoVue(telvue);
+    socketIo.on('rutasAviso', (res) => {
+      parseFirebaseNorm(rutaB[0], setPrueba);
+      setIndexRep(index);
+    });
     // firestore()
     //   .collection("rutas")
     //   .where("fecha", "==", fecha)
@@ -140,12 +149,29 @@ const ListRepartidor = (props) => {
             estatusPedido: "entregado",
           });
 
-      let fecha = `${new Date().getFullYear()}-${
-        new Date().getMonth() + details.data.totalProductosPedido - 1
-      }-${new Date().getDate()}`;
-      let readTime = new Date(fecha).getTime();
+      // let fecha = `${new Date().getFullYear()}-${
+      //   new Date().getMonth() + details.data.totalProductosPedido - 1
+      // }-${new Date().getDate()}`;
+      // let readTime = new Date(fecha).getTime();
 
-      let idCliente = await http.get('');
+      let idCliente = await http.get(`clientes-soals/?idCliente=${details.data.idCliente}`);
+
+      let schemaForUpdateClient = {
+        pedidos: [
+          ...idCliente.pedidos, 
+          {
+            fechaDeEntrega: new Date(),
+            dataPedido: details.data.producto,
+          }
+        ],
+        ultimoPedido:{
+          fechaDeEntrega: new Date(),
+          dataPedido: details.data.producto,
+        }
+
+      }
+
+      await http.update(`clientes-soals/${idCliente[0].id}`, schemaForUpdateClient);
         // await firestore()
         //   .collection("pedidosClientes")
         //   .doc(details.data.idCliente)
@@ -175,6 +201,8 @@ const ListRepartidor = (props) => {
       setView(true);
       setDetails({});
       setFirmaCliente("");
+
+      socketIo.emit('rutasMov', prueba.id);
     } else {
       alert("FIRMA DEL CLIENTE NECESARIA");
       console.log(details);
@@ -211,47 +239,40 @@ const ListRepartidor = (props) => {
     vendedorDatos[indexRep].pedidos[indexPedido].data.numTel1 =
       details.data.numTel;
 
-    // let rutaActualizar = await firestore().collection("rutas").doc(prueba.id);
-    // let dataRuta = await (await rutaActualizar.get()).data();
+    let rutaActualizar = await http.get("rutas/" + prueba.id);
+    let dataRuta = rutaActualizar
 
-    // details.data.producto.map(async (p) => {
-    //   let data = await firestore()
-    //     .collection("productos")
-    //     .where("nombreProducto", "==", p.producto)
-    //     .get();
+    details.data.producto.map(async (p) => {
+      let data = http.get(`productos/?nombreProducto=${p.producto}`)
+        
 
-    //   data.forEach(async (a) => {
-    //     let cantidadNueva = a.data().cantidadProducto - p.cantidad;
-    //     let apartadoNuevo =
-    //       parseInt(a.data().productoApartado) + parseInt(p.cantidad);
+      
+        let cantidadNueva = data[0].cantidadProducto - p.cantidad;
+        let apartadoNuevo = parseInt(data[0].productoApartado) + parseInt(p.cantidad);
+          
 
-    //     await firestore()
-    //       .collection("productos")
-    //       .doc(a.id)
-    //       .update({
-    //         cantidadProducto: cantidadNueva,
-    //         productoApartado: apartadoNuevo,
-    //       });
-    //   });
-    // });
+        await http.update("productos/" + data[0].id, {
+            cantidadProducto: cantidadNueva,
+            productoApartado: apartadoNuevo,
+        });
+    });
 
-    // await rutaActualizar.update({
-    //   repartidores: vendedorDatos,
-    //   totalNoEntregados: dataRuta.totalNoEntregados + 1,
-    // });
-    // await firestore()
-    //   .collection("pedidosRuta")
-    //   .doc(details.id)
-    //   .update({ esperaRuta: false, estatusPedido: "cancelado" });
-    // await firestore().collection("pedidosRuta").doc(details.id).delete();
-    // await firestore()
-    //   .collection("preVentaCalidad")
-    //   .doc(details.id)
-    //   .set(details.data);
+    await http.update("rutas/" + prueba.id, {
+      repartidores: vendedorDatos,
+      totalNoEntregados: dataRuta.totalNoEntregados + 1,
+    });
+    await http.update("pedidos-ruta/" + details.id,{ 
+      esperaRuta: false, 
+      estatusPedido: "cancelado" 
+    });
+    await http.delete("pedidos-ruta/" + details.id);
+    await http.post("preventa-calidads", details.data);
 
     setView(true);
     setDetails({});
     setFirmaCliente("");
+
+    socketIo.emit('rutasMov', prueba.id);
     // console.log(vendedorDatos[indexRep].pedidos[indexPedido].numTel1);
   };
 
@@ -260,7 +281,7 @@ const ListRepartidor = (props) => {
     setDetails({});
     setFirmaCliente("");
   };
-
+ 
   return (
     <Container>
       <ScrollView>
@@ -382,12 +403,17 @@ const ListRepartidor = (props) => {
                   </Right>
                 </ListItem>
 
-                <ListItem>
-                  <Text>{`Nombre cliente: ${details.data.nombreCliente}`}</Text>
+                <ListItem>                  
+                  <Text>{`Nombre cliente: ${details.data.nombreCliente}`}</Text>                
                 </ListItem>
 
                 <ListItem>
-                  <Text>{`Numero cliente: ${details.data.numTel}`}</Text>
+                  {
+                    telefonovue === 'false' ?
+                    <Text>Numero del cliente: 0000000000</Text>
+                    :
+                    <Text>{`Numero cliente: ${details.data.numTel}`}</Text>
+                  }
                 </ListItem>
 
                 <ListItem>
