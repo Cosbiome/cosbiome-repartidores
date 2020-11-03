@@ -28,8 +28,11 @@ const Home = (props) => {
         console.log(form);
 
         if (res) {
+
+          console.log(res);
           await AsyncStorage.setItem("nombre", res.user.username);
           await AsyncStorage.setItem("token", res.jwt);
+          await AsyncStorage.setItem("telefono", res.user.telefono.toString());
           props.history.push("/listRepartidor");
         }
       } catch (error) {
