@@ -44,6 +44,7 @@ class Http {
 
   update = async (url, body) => {
     try {
+      console.log(`${endpointserver}${url}`);
       let req = await axios.put(`${endpointserver}${url}`, body, {
         headers: {
           "Content-type": "application/json",
