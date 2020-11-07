@@ -42,7 +42,7 @@ const ListRepartidor = (props) => {
     let fecha;
     if (new Date().getDate() < 10) {
       fecha = `${new Date().getFullYear()}-${new Date().getMonth() + 1}-0${
-        new Date().getDate() + 1
+        new Date().getDate() 
       }`;
     } else {
       fecha = `${new Date().getFullYear()}-0${

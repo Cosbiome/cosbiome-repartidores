@@ -21,7 +21,10 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+
+      },
+      "package": "com.cosbiome.cosbiome_repartidores",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
