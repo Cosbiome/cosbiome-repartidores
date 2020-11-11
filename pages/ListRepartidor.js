@@ -41,14 +41,16 @@ const ListRepartidor = (props) => {
   const handleFetchGet = async () => {
     let fecha;
     if (new Date().getDate() < 10) {
-      fecha = `${new Date().getFullYear()}-${new Date().getMonth() + 1}-0${
-        new Date().getDate() 
-      }`;
+      fecha = `${new Date().getFullYear()}-${
+        new Date().getMonth() + 1
+      }-0${new Date().getDate()}`;
     } else {
-      fecha = `${new Date().getFullYear()}-0${
+      fecha = `${new Date().getFullYear()}-${
         new Date().getMonth() + 1
       }-${new Date().getDate()}`;
     }
+
+    console.log(fecha);
 
     let rutaB = await http.get(`rutas/?fecha=${fecha}`);
 
@@ -187,10 +189,13 @@ const ListRepartidor = (props) => {
         },
       };
 
-      await http.update(
-        `clientes-soals/${idCliente[0].id}`,
-        schemaForUpdateClient
-      );
+      if (idCliente[0]?.id) {
+        await http.update(
+          `clientes-soals/${idCliente[0].id}`,
+          schemaForUpdateClient
+        );
+      }
+
       // await firestore()
       //   .collection("pedidosClientes")
       //   .doc(details.data.idCliente)
