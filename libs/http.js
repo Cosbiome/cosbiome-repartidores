@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// const endpointserver = 'https://cosbiome-backend.herokuapp.com/';
-const endpointserver = "http://192.168.15.195:1337/";
+const endpointserver = "https://cosbiome-backend.herokuapp.com/";
+// const endpointserver = "http://192.168.15.195:1337/";
 import AsyncStorage from "@react-native-community/async-storage";
 
 class Http {
