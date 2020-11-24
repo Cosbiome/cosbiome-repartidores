@@ -45,9 +45,9 @@ const ListRepartidor = (props) => {
         new Date().getMonth() + 1
       }-0${new Date().getDate()}`;
     } else {
-      fecha = `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${
-        new Date().getDate() - 1
-      }`;
+      fecha = `${new Date().getFullYear()}-${
+        new Date().getMonth() + 1
+      }-${new Date().getDate()}`;
     }
 
     console.log(fecha);
@@ -315,22 +315,18 @@ const ListRepartidor = (props) => {
           <List>
             {prueba.data.repartidores.length > 0 ? (
               prueba.data.repartidores[indexRep].pedidos.map((a, index) => {
-                try {
-                  console.log(a.data.de.split(":"));
-                  let hora = new Date().getHours();
-                  let minutos = new Date().getMinutes();
-                  let horaFormatNew = a.data.de.split(":");
-                  let horaFloat = parseFloat(
-                    `${horaFormatNew[0]}.${horaFormatNew[1]}`
-                  );
-                  let horaFloat2 = parseFloat(`${hora}.${minutos}`);
-                  let yellow15 = horaFloat - horaFloat2;
+                console.log(a.data.de.split(":"));
+                let hora = new Date().getHours();
+                let minutos = new Date().getMinutes();
+                let horaFormatNew = a.data.de.split(":");
+                let horaFloat = parseFloat(
+                  `${horaFormatNew[0]}.${horaFormatNew[1]}`
+                );
+                let horaFloat2 = parseFloat(`${hora}.${minutos}`);
+                let yellow15 = horaFloat - horaFloat2;
 
-                  console.log(yellow15);
-                  console.log(yellow15 > 0.45 && yellow15 < 0.55);
-                } catch (error) {
-                  alert("aaa");
-                }
+                console.log(yellow15);
+                console.log(yellow15 > 0.45 && yellow15 < 0.55);
 
                 let sem;
                 if (horaFloat2 < horaFloat) {
