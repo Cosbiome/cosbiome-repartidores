@@ -257,7 +257,9 @@ const ListRepartidor = (props) => {
     );
     vendedorDatos[indexRep].pedidos[indexPedido].data.esperaRuta = false;
     vendedorDatos[indexRep].pedidos[indexPedido].data.estatusPedido =
-      "cancelado";
+      "REPROGRAMADO";
+    vendedorDatos[indexRep].pedidos[indexPedido].data.idPedido =
+      vendedorDatos[indexRep].pedidos[indexPedido].data.idPedido + "RP";
     vendedorDatos[indexRep].pedidos[indexPedido].data.porcentajeEntrega = `${
       (vendedorDatos[indexRep].pedidosEntregados * 100) /
       vendedorDatos[indexRep].totalPedidos
@@ -289,9 +291,11 @@ const ListRepartidor = (props) => {
     });
     await http.update("pedidos-rutas/" + details.id, {
       esperaRuta: false,
-      estatusPedido: "cancelado",
+      estatusPedido: "REPROGRAMADO",
+      idPedido: details.data.idPedido + "M",
     });
-    await http.delete("pedidos-rutas/" + details.id);
+
+    // await http.delete("pedidos-rutas/" + details.id);
     await http.post("preventa-calidads", details.data);
 
     setView(true);
@@ -381,8 +385,8 @@ const ListRepartidor = (props) => {
                       </Text>
                     </Body>
                     <Right>
-                      <Text style={{ fontSize: 8, color: "white" }}>
-                        {a.data.estatusPedido}
+                      <Text style={{ fontSize: 12, color: "white" }}>
+                        {a.data.estatusPedido} - $ {a.data.total}
                       </Text>
                     </Right>
                   </ListItem>
@@ -404,8 +408,8 @@ const ListRepartidor = (props) => {
                       </Text>
                     </Body>
                     <Right>
-                      <Text style={{ fontSize: 8, color: "white" }}>
-                        {a.data.estatusPedido}
+                      <Text style={{ fontSize: 12, color: "white" }}>
+                        {a.data.estatusPedido} - $ {a.data.total}
                       </Text>
                     </Right>
                   </ListItem>
