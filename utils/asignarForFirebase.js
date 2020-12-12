@@ -5,7 +5,6 @@ export const parseFirebase = (res, setState) => {
     let jsonfins = { id: "", data: {} };
 
     jsonfins.id = a.id;
-    delete a.id;
     delete a._id;
     jsonfins.data = a;
 
@@ -18,7 +17,7 @@ export const parseFirebaseNorm = (res, setState) => {
   let jsonfins = { id: "", data: {} };
 
   jsonfins.id = res.id;
-  delete res.id;
+
   delete res._id;
   jsonfins.data = res;
 

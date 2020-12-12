@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cosbiome-repartidores",
     "slug": "Cosbiome-repartidores",
-    "version": "1.5.1",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -23,7 +23,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.cosbiome.cosbiome_repartidores",
-      "versionCode": 6
+      "versionCode": 12
     },
     "web": {
       "favicon": "./assets/favicon.png"

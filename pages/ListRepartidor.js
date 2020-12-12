@@ -32,11 +32,9 @@ const ListRepartidor = (props) => {
     handleFetchGet();
   }, []);
 
-  // useEffect(() => {
-  //   console.log(prueba);
-  //   console.log(indexRep);
-  //   console.log(details);
-  // }, [prueba, indexRep, details]);
+  useEffect(() => {
+    console.log("details =>", details);
+  }, [details]);
 
   const handleFetchGet = async () => {
     let fecha;
@@ -49,185 +47,76 @@ const ListRepartidor = (props) => {
         new Date().getMonth() + 1
       }-${new Date().getDate()}`;
     }
-
-    console.log(fecha);
-
-    let rutaB = await http.get(`rutas/?fecha=${fecha}`);
-
-    console.log(rutaB[0]);
-    parseFirebaseNorm(rutaB[0], setPrueba);
-
     let nombre = await AsyncStorage.getItem("nombre");
-    let index = rutaB[0].repartidores.findIndex(
-      (rep) => rep.nombreRepartidor === nombre
+
+    let rutaB = await http.get(
+      `pedidos-rutas/?fechaEntrega=${fecha}&repartidor=${nombre}`
     );
-    let telvue = await AsyncStorage.getItem("telefono");
-    setIndexRep(index);
 
-    setTelefonoVue(telvue);
-    socketIo.on("rutasAviso", (res) => {
-      console.log(res);
-      parseFirebaseNorm(res, setPrueba);
-      setIndexRep(index);
-    });
-    // firestore()
-    //   .collection("rutas")
-    //   .where("fecha", "==", fecha)
-    //   .onSnapshot(async (a) => {
-    //     let nombre = await AsyncStorage.getItem("nombre");
-
-    //     console.log(a, fecha);
-
-    //     setPrueba({ id: a.docs[0].id, data: a.docs[0].data() });
-
-    //     let index = a.docs[0]
-    //       .data()
-    //       .repartidores.findIndex((rep) => rep.nombreRepartidor === nombre);
-
-    //     setIndexRep(index);
-    //   });
+    parseFirebaseNorm(rutaB, setPrueba);
   };
 
   const handleClick = async (idPedido) => {
     setView(false);
-    let detailData = prueba.data.repartidores[indexRep].pedidos.filter(
-      (ped) => ped.id === idPedido
-    )[0];
-    let arrayTotalProds = prueba.data.repartidores[indexRep].pedidos
+    let detailData = prueba.data.filter((ped) => ped.id === idPedido)[0];
+    let arrayTotalProds = prueba.data
       .filter((ped) => ped.id === idPedido)[0]
-      .data.producto.map((a) => parseInt(a.cantidad));
+      .producto.map((a) => parseInt(a.cantidad));
     let sumaTotalProds = arrayTotalProds.reduce((a, b) => a + b);
-    detailData.data.totalProductosPedido = sumaTotalProds;
-    setDetails(detailData);
+    detailData.totalProductosPedido = sumaTotalProds;
+    parseFirebaseNorm(detailData, setDetails);
   };
 
   const handleConfirm = async () => {
     if (firmaCliente.length > 0) {
-      let vendedorDatos = prueba.data.repartidores;
-      vendedorDatos[indexRep] = {
-        ...vendedorDatos[indexRep],
-        pedidosEntregados:
-          parseInt(vendedorDatos[indexRep].pedidosEntregados) + 1,
-        dineroRecaudado:
-          parseInt(vendedorDatos[indexRep].dineroRecaudado) +
-          parseInt(details.data.total),
-        porcentajeEntrega: `${(
-          ((vendedorDatos[indexRep].pedidosEntregados + 1) * 100) /
-          vendedorDatos[indexRep].totalPedidos
-        ).toFixed(2)}%`,
-        porcentajeDinero: `${(
-          ((vendedorDatos[indexRep].dineroRecaudado +
-            parseInt(details.data.total)) *
-            100) /
-          vendedorDatos[indexRep].totalRecaudado
-        ).toFixed(2)}%`,
-      };
-      let indexPedido = vendedorDatos[indexRep].pedidos.findIndex(
-        (a) => a.id === details.id
-      );
-      vendedorDatos[indexRep].pedidos[indexPedido].data.esperaRuta = false;
-      vendedorDatos[indexRep].pedidos[
-        indexPedido
-      ].data.firmaCliente = firmaCliente;
-      vendedorDatos[indexRep].pedidos[indexPedido].data.estatusPedido =
-        "entregado";
-
-      let rutaActualizar = await http.get("rutas/" + prueba.id);
-      let dataRuta = rutaActualizar;
-
-      await http.update("rutas/" + prueba.id, {
-        repartidores: vendedorDatos,
-        totalEntregados: parseInt(dataRuta.totalEntregados) + 1,
-        dineroRecaudado:
-          parseInt(dataRuta.dineroRecaudado) + parseInt(details.data.total),
-        porcentajeEntrega: `${(
-          ((parseInt(dataRuta.totalEntregados) + 1) * 100) /
-          parseInt(dataRuta.totalPedidos)
-        ).toFixed(2)}%`,
-        porcentajeDinero: `${(
-          ((parseInt(dataRuta.dineroRecaudado) + parseInt(details.data.total)) *
-            100) /
-          parseInt(dataRuta.totalRecaudado)
-        ).toFixed(2)}%`,
-      });
       await http.update("pedidos-rutas/" + details.id, {
         firmaCliente: firmaCliente,
         esperaRuta: false,
         estatusPedido: "entregado",
       });
 
-      // let fecha = `${new Date().getFullYear()}-${
-      //   new Date().getMonth() + details.data.totalProductosPedido - 1
-      // }-${new Date().getDate()}`;
-      // let readTime = new Date(fecha).getTime();
-
-      let idCliente = await http.get(
-        `clientes-soals/?idCliente=${details.data.idCliente}`
-      );
-
-      console.log(idCliente[0]?.pedidos);
-
-      let schemaForUpdateClient = {
-        pedidos:
-          idCliente[0]?.pedidos !== undefined
-            ? [
-                ...idCliente[0]?.pedidos,
-                {
-                  fechaDeEntrega: new Date(),
-                  dataPedido: details.data.producto,
-                },
-              ]
-            : [
-                {
-                  fechaDeEntrega: new Date(),
-                  dataPedido: details.data.producto,
-                },
-              ],
-        ultimoPedido: {
-          fechaDeEntrega: new Date(),
-          dataPedido: details.data.producto,
-        },
-      };
-
-      if (idCliente[0]?.id) {
-        await http.update(
-          `clientes-soals/${idCliente[0].id}`,
-          schemaForUpdateClient
+      if (details.data.idCliente) {
+        let idCliente = await http.get(
+          `clientes-soals/?idCliente=${details.data.idCliente}`
         );
-      }
 
-      // await firestore()
-      //   .collection("pedidosClientes")
-      //   .doc(details.data.idCliente)
-      //   .set(
-      //     {
-      //       nombreCliente: details.data.nombreCliente,
-      //       fechaEntrega: details.data.fechaEntrega,
-      //       productosDelPedido: details.data.producto.map((a) => a.producto),
-      //       totalProductos: details.data.totalProductosPedido,
-      //       formaDePago: details.data.formaDePago,
-      //       numTel: details.data.numTel,
-      //       estatusPedido: "entregado",
-      //       ciudad: details.data.ciudad,
-      //       domicilio: details.data.domicilio,
-      //       cruces: details.data.cruces,
-      //       colonia: details.data.colonia,
-      //       estadoProv: details.data.estadoProv,
-      //       codigoPostal: details.data.codigoPostal,
-      //       vendedor: details.data.vendedor,
-      //       intentos: 0,
-      //       enEspera: false,
-      //       veriTime: readTime,
-      //     },
-      //     { merge: true }
-      //   );
+        console.log(idCliente[0]?.pedidos);
+
+        let schemaForUpdateClient = {
+          pedidos:
+            idCliente[0]?.pedidos !== undefined
+              ? [
+                  ...idCliente[0]?.pedidos,
+                  {
+                    fechaDeEntrega: new Date(),
+                    dataPedido: details.data.producto,
+                  },
+                ]
+              : [
+                  {
+                    fechaDeEntrega: new Date(),
+                    dataPedido: details.data.producto,
+                  },
+                ],
+          ultimoPedido: {
+            fechaDeEntrega: new Date(),
+            dataPedido: details.data.producto,
+          },
+        };
+
+        if (idCliente[0]?.id) {
+          await http.update(
+            `clientes-soals/${idCliente[0].id}`,
+            schemaForUpdateClient
+          );
+        }
+      }
 
       setView(true);
       setDetails({});
       setFirmaCliente("");
 
-      console.log(prueba.id);
-      socketIo.emit("rutasMov", prueba.id);
+      handleFetchGet();
     } else {
       alert("FIRMA DEL CLIENTE NECESARIA");
       console.log(details);
@@ -247,27 +136,6 @@ const ListRepartidor = (props) => {
   };
 
   const handleDelete = async () => {
-    let vendedorDatos = prueba.data.repartidores;
-    vendedorDatos[indexRep] = {
-      ...vendedorDatos[indexRep],
-      pedidosNoEntregados: vendedorDatos[indexRep].pedidosNoEntregados + 1,
-    };
-    let indexPedido = vendedorDatos[indexRep].pedidos.findIndex(
-      (a) => a.id === details.id
-    );
-    vendedorDatos[indexRep].pedidos[indexPedido].data.esperaRuta = false;
-    vendedorDatos[indexRep].pedidos[indexPedido].data.estatusPedido =
-      "cancelado";
-    vendedorDatos[indexRep].pedidos[indexPedido].data.porcentajeEntrega = `${
-      (vendedorDatos[indexRep].pedidosEntregados * 100) /
-      vendedorDatos[indexRep].totalPedidos
-    }%`;
-    vendedorDatos[indexRep].pedidos[indexPedido].data.numTel1 =
-      details.data.numTel;
-
-    let rutaActualizar = await http.get("rutas/" + prueba.id);
-    let dataRuta = rutaActualizar;
-
     details.data.producto.map(async (p) => {
       let data = await http.get(`productos/?nombreProducto=${p.producto}`);
 
@@ -283,23 +151,20 @@ const ListRepartidor = (props) => {
       });
     });
 
-    await http.update("rutas/" + prueba.id, {
-      repartidores: vendedorDatos,
-      totalNoEntregados: dataRuta.totalNoEntregados + 1,
-    });
     await http.update("pedidos-rutas/" + details.id, {
       esperaRuta: false,
-      estatusPedido: "cancelado",
+      estatusPedido: "REPROGRAMADO",
     });
-    await http.delete("pedidos-rutas/" + details.id);
+
+    details.data.idPedido = details.data.idPedido + "R";
+
     await http.post("preventa-calidads", details.data);
 
     setView(true);
     setDetails({});
     setFirmaCliente("");
 
-    socketIo.emit("rutasMov", prueba.id);
-    // console.log(vendedorDatos[indexRep].pedidos[indexPedido].numTel1);
+    handleFetchGet();
   };
 
   const handleReg = () => {
@@ -313,12 +178,12 @@ const ListRepartidor = (props) => {
       <ScrollView>
         {view ? (
           <List>
-            {prueba.data.repartidores.length > 0 ? (
-              prueba.data.repartidores[indexRep].pedidos.map((a, index) => {
-                console.log(a.data.de.split(":"));
+            {prueba.data.length > 0 ? (
+              prueba.data.map((a, index) => {
+                console.log(a.de.split(":"));
                 let hora = new Date().getHours();
                 let minutos = new Date().getMinutes();
-                let horaFormatNew = a.data.de.split(":");
+                let horaFormatNew = a.de.split(":");
                 let horaFloat = parseFloat(
                   `${horaFormatNew[0]}.${horaFormatNew[1]}`
                 );
@@ -341,7 +206,7 @@ const ListRepartidor = (props) => {
                   sem = "red";
                 }
 
-                return a.data.esperaRuta ? (
+                return a.esperaRuta ? (
                   <ListItem
                     key={a.id}
                     style={{
@@ -352,18 +217,16 @@ const ListRepartidor = (props) => {
                     itemHeader
                   >
                     <Left>
-                      <Text style={{ fontSize: 11 }}>{a.data.idPedido}</Text>
+                      <Text style={{ fontSize: 11 }}>{a.idPedido}</Text>
                     </Left>
                     <Body>
-                      <Text style={{ fontSize: 11 }}>
-                        {a.data.nombreCliente}
-                      </Text>
+                      <Text style={{ fontSize: 11 }}>{a.nombreCliente}</Text>
                     </Body>
                     <Right>
                       <Icon name="arrow-forward" />
                     </Right>
                   </ListItem>
-                ) : a.data.estatusPedido === "entregado" ? (
+                ) : a.estatusPedido === "entregado" ? (
                   <ListItem
                     key={a.id}
                     disabled={true}
@@ -372,17 +235,17 @@ const ListRepartidor = (props) => {
                   >
                     <Left>
                       <Text style={{ fontSize: 11, color: "white" }}>
-                        {a.data.idPedido}
+                        {a.idPedido}
                       </Text>
                     </Left>
                     <Body>
                       <Text style={{ fontSize: 11, color: "white" }}>
-                        {a.data.nombreCliente}
+                        {a.nombreCliente}
                       </Text>
                     </Body>
                     <Right>
-                      <Text style={{ fontSize: 8, color: "white" }}>
-                        {a.data.estatusPedido}
+                      <Text style={{ fontSize: 11, color: "white" }}>
+                        {a.estatusPedido} - $ {a.total}
                       </Text>
                     </Right>
                   </ListItem>
@@ -395,17 +258,17 @@ const ListRepartidor = (props) => {
                   >
                     <Left>
                       <Text style={{ fontSize: 11, color: "white" }}>
-                        {a.data.idPedido}
+                        {a.idPedido}
                       </Text>
                     </Left>
                     <Body>
                       <Text style={{ fontSize: 11, color: "white" }}>
-                        {a.data.nombreCliente}
+                        {a.nombreCliente}
                       </Text>
                     </Body>
                     <Right>
-                      <Text style={{ fontSize: 8, color: "white" }}>
-                        {a.data.estatusPedido}
+                      <Text style={{ fontSize: 11, color: "white" }}>
+                        {a.estatusPedido} - $ {a.total}
                       </Text>
                     </Right>
                   </ListItem>
