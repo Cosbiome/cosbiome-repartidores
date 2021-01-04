@@ -17,12 +17,14 @@ import AsyncStorage from "@react-native-community/async-storage";
 import { ScrollView, Alert } from "react-native";
 import { http } from "../libs/http";
 import { parseFirebaseNorm } from "../utils/asignarForFirebase";
-import { socketIo } from "../utils/socketIo";
 
 const ListRepartidor = (props) => {
   const [prueba, setPrueba] = useState({ data: { repartidores: [] } });
   const [view, setView] = useState(true);
-  const [details, setDetails] = useState({});
+  const [details, setDetails] = useState({
+    numTel1: "",
+    estatusPedido: "",
+  });
   const [indexRep, setIndexRep] = useState(0);
   const [firmaCliente, setFirmaCliente] = useState("");
   const [cancelConfirm, setCancelConfirm] = useState(false);
@@ -39,11 +41,11 @@ const ListRepartidor = (props) => {
   const handleFetchGet = async () => {
     let fecha;
     if (new Date().getDate() < 10) {
-      fecha = `${new Date().getFullYear()}-${
+      fecha = `${new Date().getFullYear()}-0${
         new Date().getMonth() + 1
       }-0${new Date().getDate()}`;
     } else {
-      fecha = `${new Date().getFullYear()}-${
+      fecha = `${new Date().getFullYear()}-0${
         new Date().getMonth() + 1
       }-${new Date().getDate()}`;
     }
@@ -52,6 +54,8 @@ const ListRepartidor = (props) => {
     let rutaB = await http.get(
       `pedidos-rutas/?fechaEntrega=${fecha}&repartidor=${nombre}`
     );
+
+    console.log("details =>", fecha);
 
     parseFirebaseNorm(rutaB, setPrueba);
   };
@@ -157,6 +161,8 @@ const ListRepartidor = (props) => {
     });
 
     details.data.idPedido = details.data.idPedido + "R";
+    details.data.numTel1 = details.data.numTel;
+    details.data.estatusPedido = "REPROGRAMADO";
 
     await http.post("preventa-calidads", details.data);
 
